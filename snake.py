@@ -4,22 +4,27 @@ import random
 pygame.init() # Initialise pygame
 
 # Constants
-HEIGHT = 800
-WIDTH = 800 
-CELL_SIZE = 20
-CELL_MOVEMENT = 1 
+HEIGHT = 600
+WIDTH = 600 
+CELL_SIZE = 30
+CELL_MOVEMENT = 0.5 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+ROWS = HEIGHT // CELL_SIZE
+COLS = WIDTH // CELL_SIZE
 
 screen = pygame.display.set_mode((HEIGHT,WIDTH)) # Set up screen/display
 pygame.display.set_caption("PySnake")
 clock = pygame.time.Clock()
 
+game_over = None # Variable created for when the game is over
+
+
 class Snake:
-    def __init__(self): # Initialise Snake object
-        self.body = [[5,5], [4,5], [3,5]]
+    def __init__(self): # Initialise Snake class
+        self.body = [[5,5], [4,5], [3,5], [2,5]]
         self.direction = "RIGHT"
     def move(self):
         # Getting position of head
@@ -43,12 +48,37 @@ class Snake:
             x, y = segment 
             pygame.draw.rect(screen, GREEN, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
-
-        
+    def get_head_position(self):
+        return self.body[0] # Method for returning position of snake's head
     
-    # def change_direction(self, new_direction):
+    def check_wall_collision(self):
+        head_x, head_y = self.get_head_position()
 
+        head_x_pixel = head_x * CELL_SIZE # Creates a larger surface area for collision to be detected (x)
+        head_y_pixel = head_y * CELL_SIZE # Creates a larger surface area for collision to be detected (y)
+
+        if (head_x_pixel < 0 or
+        head_x_pixel + CELL_SIZE > WIDTH or  # Adjust for the right edge
+        head_y_pixel < 0 or
+        head_y_pixel + CELL_SIZE > HEIGHT):  # Adjust for the bottom edge
+            return True  # Collision detected
+        return False
+    
+class Food:
+    def __init__(self): # Initialise Food class 
+        self.position = [random.randint(0, COLS - 1), random.randint(0, ROWS - 1)] # Positions the food at random coords (x,y)
+    
+    def draw(self, screen): # Method for drawing food object
+        x, y = self.position
+        pygame.draw.rect(
+            screen, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            )
+        
 snake = Snake() # Create snake object
+
+FPS = 60
+MOVE_SPEED = 4
+frame_count = 0
 
 running = True
 while running: # Game loop
@@ -56,6 +86,10 @@ while running: # Game loop
         if event.type == pygame.QUIT: 
             running = False # If user quits tab, game stops
     
+    if snake.check_wall_collision(): # Conditional using snake object & method
+        print("The snake hit the wall!") # Print statement
+        pygame.quit() # Quits the game
+
 
     keys = pygame.key.get_pressed() # User input control
     if keys[pygame.K_UP] and snake.direction != "DOWN":
@@ -67,11 +101,14 @@ while running: # Game loop
     if keys[pygame.K_RIGHT] and snake.direction != "LEFT":
         snake.direction = "RIGHT"
 
-    snake.move()
+    frame_count +=1 # Increments frame counter
 
-    screen.fill((255,245,200))
-    snake.draw(screen)
-    pygame.display.flip()
+    if frame_count % MOVE_SPEED == 0: # Moves the snake at desired spped
+        snake.move()
 
-    clock.tick(60)
+    screen.fill((255,245,200)) # A slightly darker beige colour
+    snake.draw(screen) # Draws the snake onto the screen
+    pygame.display.flip() # Refreshes screen
+
+    clock.tick(FPS) # Controls how many frames per second the game runs at
 
