@@ -2,16 +2,17 @@
 
 An object-oriented snake game, using the PyGame library. 
 
-## Features
+### Features
 
 A controllable snake object, that can be directed to eat food with user input.
 A score-counter in the corner of the screen, that increments each time the snake eats food and grows in size.
 Allows the player to try again if they lose.
 
-## Setup
+### Setup
 
 Copy this code and run it in any terminal that has Python installed.
 Ensure that you have installed the PyGame library into the terminal.
+
 
 ### Reflection
 
