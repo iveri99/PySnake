@@ -15,6 +15,10 @@ RED = (255, 0, 0)
 ROWS = HEIGHT // CELL_SIZE
 COLS = WIDTH // CELL_SIZE
 
+# Define game variables
+food = [0,0]
+new_food = True
+
 screen = pygame.display.set_mode((HEIGHT,WIDTH)) # Set up screen/display
 pygame.display.set_caption("PySnake")
 clock = pygame.time.Clock()
@@ -64,6 +68,9 @@ class Snake:
             return True  # Collision detected
         return False
     
+    def get_body_position(self): # Returns position the whole snake object
+        return self.body
+    
 class Food:
     def __init__(self): # Initialise Food class 
         self.position = [random.randint(0, COLS - 1), random.randint(0, ROWS - 1)] # Positions the food at random coords (x,y)
@@ -74,7 +81,32 @@ class Food:
             screen, RED, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
             )
         
+    def get_food_position(self): # Returns position of food object
+        return self.position
+        
+    def check_snake_collision(self, Snake): # Checks whether snake & food are on the same coordinates
+        food_x, food_y = self.position
+        head_x, head_y = snake.get_head_position()
+
+        if [food_x, food_y] == [head_x, head_y]:
+            return True
+        return False
+
+    def respawn(self): # Respawns food object, and makes sure that food object isn't in the same position as the snake object
+        while True:
+            new_position = [random.randint(0, COLS - 1), random.randint(0, ROWS - 1)]
+            if new_position not in snake.get_body_position:
+                self.position = new_position
+                break 
+        
+    # def respawn(self):
+    # if snake When snake touches food object
+        # Make food object disappear
+        # Then immediately redraw food object at another random position on the grid
+        
+        
 snake = Snake() # Create snake object
+food = Food() # Create food object
 
 FPS = 60
 MOVE_SPEED = 4
@@ -108,6 +140,7 @@ while running: # Game loop
 
     screen.fill((255,245,200)) # A slightly darker beige colour
     snake.draw(screen) # Draws the snake onto the screen
+    food.draw(screen) # Draws the food object onto screen
     pygame.display.flip() # Refreshes screen
 
     clock.tick(FPS) # Controls how many frames per second the game runs at
