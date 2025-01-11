@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import pygame.freetype
 
 # Constants
 HEIGHT = 600
@@ -12,6 +13,7 @@ BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
 BACKGROUND = (255,245,200)
+LINES_COLOUR = (169,149,123)
 ROWS = HEIGHT // CELL_SIZE
 COLS = WIDTH // CELL_SIZE
 
@@ -19,7 +21,7 @@ class Snake:
     def __init__(self): # Initialise Snake class
         self.body = [[5,5], [4,5], [3,5], [2,5]]
         self.direction = "RIGHT"
-        self.speed = CELL_SIZE // 10  # Pixels to move per frame (adjust for smoothness)
+        self.speed = CELL_SIZE // 5  # Pixels to move per frame (adjust for smoothness)
         self.target_position = None  # Target position for the head
 
     def move(self):
@@ -106,7 +108,7 @@ def drawGrid(screen):
     for x in range(0, WIDTH, CELL_SIZE):
         for y in range(0, HEIGHT, CELL_SIZE):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
-            pygame.draw.rect(screen, BLACK, rect, 1)
+            pygame.draw.rect(screen, LINES_COLOUR, rect, 1)
 
 def main():
     pygame.init() # Initialise PyGame
@@ -116,20 +118,23 @@ def main():
     pygame.display.set_caption("PySnake")
     clock = pygame.time.Clock()
 
-    # Game objects
+    # Game objects/score
     snake = Snake()
     food = Food()
+    score = 0
 
     # Game settings
     FPS = 60 
-    MOVE_SPEED = 10
+    MOVE_SPEED = 7
     frame_count = 0
     running = True
+
+    font = pygame.font.Font(None, 36)
     
     # Game loop
     while running:
         frame_count +=1 # Increments frame counter
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
                 running = False # If user quits tab, game stops
@@ -143,6 +148,7 @@ def main():
             print("Collision detected!")
             snake.grow() # Extends the snake by one segment
             food.respawn(snake) # Respawns food at a new position on the grid
+            score += 1
 
         # Handles user input
         keys = pygame.key.get_pressed()
@@ -165,9 +171,16 @@ def main():
         drawGrid(screen)
         snake.draw(screen) # Draws the snake onto the screen
         food.draw(screen) # Draws the food object onto screen
-        pygame.display.flip() # Refreshes screen
+        # pygame.display.update()
+
+        # Score counter
+        # Draws a semi-transparent background for the scoreboard
+        pygame.draw.rect(screen, (50,50,50), (5, 5, 120, 40))  # Black rectangle with transparency
+        score_text = font.render(f"Score: {score}", True, WHITE)
+        screen.blit(score_text, (10, 10))  # Draw the score text
+
         clock.tick(FPS) # Controls how many frames per second the game runs at
-        pygame.display.update()
+        pygame.display.flip() # Refreshes screen
 
     pygame.quit()
 
