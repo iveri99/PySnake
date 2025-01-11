@@ -1,36 +1,29 @@
 import pygame
 import random
-
-pygame.init() # Initialise pygame
+import sys
 
 # Constants
 HEIGHT = 600
 WIDTH = 600 
 CELL_SIZE = 30
-CELL_MOVEMENT = 0.5 
+CELL_MOVEMENT = 1
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 RED = (255, 0, 0)
+BACKGROUND = (255,245,200)
 ROWS = HEIGHT // CELL_SIZE
 COLS = WIDTH // CELL_SIZE
-
-# Define game variables
-food = [0,0]
-new_food = True
-
-screen = pygame.display.set_mode((HEIGHT,WIDTH)) # Set up screen/display
-pygame.display.set_caption("PySnake")
-clock = pygame.time.Clock()
-
-game_over = None # Variable created for when the game is over
-
 
 class Snake:
     def __init__(self): # Initialise Snake class
         self.body = [[5,5], [4,5], [3,5], [2,5]]
         self.direction = "RIGHT"
+        self.speed = CELL_SIZE // 10  # Pixels to move per frame (adjust for smoothness)
+        self.target_position = None  # Target position for the head
+
     def move(self):
+        # if self.target.position
         # Getting position of head
         head_x, head_y = self.body[0]
         
@@ -71,6 +64,11 @@ class Snake:
     def get_body_position(self): # Returns position the whole snake object
         return self.body
     
+    def grow(self): # Appends the snake by one cell size
+        tail = self.body[-1]
+        self.body.append(tail)
+
+    
 class Food:
     def __init__(self): # Initialise Food class 
         self.position = [random.randint(0, COLS - 1), random.randint(0, ROWS - 1)] # Positions the food at random coords (x,y)
@@ -84,7 +82,7 @@ class Food:
     def get_food_position(self): # Returns position of food object
         return self.position
         
-    def check_snake_collision(self, Snake): # Checks whether snake & food are on the same coordinates
+    def check_snake_collision(self, snake): # Checks whether snake & food are on the same coordinates
         food_x, food_y = self.position
         head_x, head_y = snake.get_head_position()
 
@@ -92,56 +90,86 @@ class Food:
             return True
         return False
 
-    def respawn(self): # Respawns food object, and makes sure that food object isn't in the same position as the snake object
-        while True:
-            new_position = [random.randint(0, COLS - 1), random.randint(0, ROWS - 1)]
-            if new_position not in snake.get_body_position:
-                self.position = new_position
-                break 
-        
-    # def respawn(self):
-    # if snake When snake touches food object
-        # Make food object disappear
-        # Then immediately redraw food object at another random position on the grid
-        
-        
-snake = Snake() # Create snake object
-food = Food() # Create food object
+    def respawn(self, snake): # Respawns food object in a 'free' space on the grid
+        all_positions = [
+            [x, y] for x in range(COLS) for y in range(ROWS)
+        ]
+        snake_positions = set(tuple(pos) for pos in snake.get_body_position())
+        free_positions = [pos for pos in all_positions if tuple(pos) not in snake_positions]
 
-FPS = 60
-MOVE_SPEED = 4
-frame_count = 0
+        if free_positions:
+            self.position = random.choice(free_positions)
+        else:
+            raise RuntimeError("No free position available for food.")
 
-running = True
-while running: # Game loop
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: 
-            running = False # If user quits tab, game stops
+def drawGrid(screen):
+    for x in range(0, WIDTH, CELL_SIZE):
+        for y in range(0, HEIGHT, CELL_SIZE):
+            rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
+            pygame.draw.rect(screen, BLACK, rect, 1)
+
+def main():
+    pygame.init() # Initialise PyGame
     
-    if snake.check_wall_collision(): # Conditional using snake object & method
-        print("The snake hit the wall!") # Print statement
-        pygame.quit() # Quits the game
+    # Set up screen/display
+    screen = pygame.display.set_mode((HEIGHT,WIDTH))
+    pygame.display.set_caption("PySnake")
+    clock = pygame.time.Clock()
 
+    # Game objects
+    snake = Snake()
+    food = Food()
 
-    keys = pygame.key.get_pressed() # User input control
-    if keys[pygame.K_UP] and snake.direction != "DOWN":
-        snake.direction = "UP"
-    if keys[pygame.K_DOWN] and snake.direction != "UP":
-        snake.direction = "DOWN"
-    if keys[pygame.K_LEFT] and snake.direction != "RIGHT":
-        snake.direction = "LEFT"
-    if keys[pygame.K_RIGHT] and snake.direction != "LEFT":
-        snake.direction = "RIGHT"
+    # Game settings
+    FPS = 60 
+    MOVE_SPEED = 10
+    frame_count = 0
+    running = True
+    
+    # Game loop
+    while running:
+        frame_count +=1 # Increments frame counter
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: 
+                running = False # If user quits tab, game stops
+        
+        # Check collisions
+        if snake.check_wall_collision():
+            print("The snake hit the wall!") # Print statement
+            pygame.quit() # Quits the game
 
-    frame_count +=1 # Increments frame counter
+        if food.check_snake_collision(snake): # Checks if there is a collision between the snake and the food objects
+            print("Collision detected!")
+            snake.grow() # Extends the snake by one segment
+            food.respawn(snake) # Respawns food at a new position on the grid
 
-    if frame_count % MOVE_SPEED == 0: # Moves the snake at desired spped
-        snake.move()
+        # Handles user input
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_UP] and snake.direction != "DOWN":
+            snake.direction = "UP"
+        if keys[pygame.K_DOWN] and snake.direction != "UP":
+            snake.direction = "DOWN"
+        if keys[pygame.K_LEFT] and snake.direction != "RIGHT":
+            snake.direction = "LEFT"
+        if keys[pygame.K_RIGHT] and snake.direction != "LEFT":
+            snake.direction = "RIGHT"
 
-    screen.fill((255,245,200)) # A slightly darker beige colour
-    snake.draw(screen) # Draws the snake onto the screen
-    food.draw(screen) # Draws the food object onto screen
-    pygame.display.flip() # Refreshes screen
+        # Move the snake
+        if frame_count % MOVE_SPEED == 0:
+            print("Snake is moving")
+            snake.move()
 
-    clock.tick(FPS) # Controls how many frames per second the game runs at
+        # Draw everything
+        screen.fill(BACKGROUND) # A slightly darker beige colour
+        drawGrid(screen)
+        snake.draw(screen) # Draws the snake onto the screen
+        food.draw(screen) # Draws the food object onto screen
+        pygame.display.flip() # Refreshes screen
+        clock.tick(FPS) # Controls how many frames per second the game runs at
+        pygame.display.update()
 
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
