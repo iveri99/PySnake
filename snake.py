@@ -171,7 +171,6 @@ def main():
         drawGrid(screen)
         snake.draw(screen) # Draws the snake onto the screen
         food.draw(screen) # Draws the food object onto screen
-        # pygame.display.update()
 
         # Score counter
         # Draws a semi-transparent background for the scoreboard
