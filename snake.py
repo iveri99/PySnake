@@ -69,6 +69,16 @@ class Snake:
     def grow(self): # Appends the snake by one cell size
         tail = self.body[-1]
         self.body.append(tail)
+    
+    def check_self_collision(self):
+        head_x, head_y = self.get_head_position()
+        
+        for segment_x, segment_y in self.body[1:]:
+            if (head_x == segment_x and
+                head_y == segment_y):
+                return True
+            
+        return False
 
     
 class Food:
@@ -150,6 +160,10 @@ def main():
             food.respawn(snake) # Respawns food at a new position on the grid
             score += 1
 
+        if snake.check_self_collision():
+            print("The snake hit itself!")
+            pygame.quit()
+
         # Handles user input
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP] and snake.direction != "DOWN":
@@ -174,9 +188,12 @@ def main():
 
         # Score counter
         # Draws a semi-transparent background for the scoreboard
-        pygame.draw.rect(screen, (50,50,50), (5, 5, 120, 40))  # Black rectangle with transparency
+        score_bg_surface = pygame.Surface((120, 40), pygame.SRCALPHA)  # Size: 120x40
+        score_bg_surface.fill((50, 50, 50, 150))  # Dark gray with 50% transparency (alpha = 128)
+        
+        screen.blit(score_bg_surface, (5, 5))  # Draws transparent background at (5, 5)
         score_text = font.render(f"Score: {score}", True, WHITE)
-        screen.blit(score_text, (10, 10))  # Draw the score text
+        screen.blit(score_text, (10, 10))  # Draws score text
 
         clock.tick(FPS) # Controls how many frames per second the game runs at
         pygame.display.flip() # Refreshes screen
