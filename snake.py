@@ -17,6 +17,14 @@ LINES_COLOUR = (169,149,123)
 ROWS = HEIGHT // CELL_SIZE
 COLS = WIDTH // CELL_SIZE
 
+# Constants for menu
+OVERLAY_COLOR = (0, 0, 0, 128)  # Black with 50% transparency
+BUTTON_COLOR = (200, 0, 0)  # Red button color
+BUTTON_HOVER_COLOR = (255, 50, 50)  # Lighter red for hover
+BUTTON_TEXT_COLOR = (255, 255, 255)  # White text
+BUTTON_WIDTH = 200
+BUTTON_HEIGHT = 50
+
 class Snake:
     def __init__(self): # Initialise Snake class
         self.body = [[5,5], [4,5], [3,5], [2,5]]
@@ -120,6 +128,49 @@ def drawGrid(screen):
             rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
             pygame.draw.rect(screen, LINES_COLOUR, rect, 1)
 
+def play_again(screen):
+    # Translucent overlay
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill(OVERLAY_COLOR)
+    screen.blit(overlay, (0, 0))
+
+    # Button positions
+    play_again_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, HEIGHT // 2 - 60, BUTTON_WIDTH, BUTTON_HEIGHT)
+    quit_rect = pygame.Rect(WIDTH // 2 - BUTTON_WIDTH // 2, HEIGHT // 2 + 10, BUTTON_WIDTH, BUTTON_HEIGHT)
+
+    font = pygame.font.Font(None, 36)
+
+    while True:
+        # Draw buttons
+        mouse_pos = pygame.mouse.get_pos()
+
+        # Play Again Button
+        pygame.draw.rect(screen, BUTTON_HOVER_COLOR if play_again_rect.collidepoint(mouse_pos) else BUTTON_COLOR, play_again_rect)
+        play_again_text = font.render("Play Again", True, BUTTON_TEXT_COLOR)
+        screen.blit(play_again_text, (play_again_rect.x + 38, play_again_rect.y + 12))
+
+        # Quit Button
+        pygame.draw.rect(screen, BUTTON_HOVER_COLOR if quit_rect.collidepoint(mouse_pos) else BUTTON_COLOR, quit_rect)
+        quit_text = font.render("Quit", True, BUTTON_TEXT_COLOR)
+        screen.blit(quit_text, (quit_rect.x + 70, quit_rect.y + 12))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_again_rect.collidepoint(mouse_pos):
+                    return True # Restart the game
+                if quit_rect.collidepoint(mouse_pos):
+                    pygame.quit()
+                    return False
+
+
+
+
 def main():
     pygame.init() # Initialise PyGame
     
@@ -149,20 +200,20 @@ def main():
             if event.type == pygame.QUIT: 
                 running = False # If user quits tab, game stops
         
-        # Check collisions
-        if snake.check_wall_collision():
-            print("The snake hit the wall!") # Print statement
-            pygame.quit() # Quits the game
+        if snake.check_wall_collision() or snake.check_self_collision():
+            print("Game Over!")
+            if play_again(screen):  # Call the play_again function
+                main()  # Restart the game
+            else:
+                pygame.quit()
+                return
+        
 
         if food.check_snake_collision(snake): # Checks if there is a collision between the snake and the food objects
             print("Collision detected!")
             snake.grow() # Extends the snake by one segment
             food.respawn(snake) # Respawns food at a new position on the grid
             score += 1
-
-        if snake.check_self_collision():
-            print("The snake hit itself!")
-            pygame.quit()
 
         # Handles user input
         keys = pygame.key.get_pressed()
