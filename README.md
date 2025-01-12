@@ -13,7 +13,7 @@ Allows the player to try again if they lose.
 Copy this code and run it in any terminal that has Python installed.
 Ensure that you have installed the PyGame library into the terminal.
 
-![alt text](PySnake_ss_1.png)
+<img src="image-url" alt="Alt text" width="200">
 
 
 ### Reflection
